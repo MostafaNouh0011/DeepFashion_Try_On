@@ -60,8 +60,8 @@ def compose(label, mask, color_mask, edge, color, noise):
 def changearm(old_label):
     label = old_label
     arm1 = torch.FloatTensor((data['label'].cpu().numpy() == 11).astype(np.int))
-    arm2 = torch.FloatFloatFloatTensor((data['label'].cpu().numpy() == 13).astype(np.int))
-    noise = torch.FloatFloatFloatTensor((data['label'].cpu().numpy() == 7).astype(np.int))
+    arm2 = torch.FloatTensor((data['label'].cpu().numpy() == 13).astype(np.int))
+    noise = torch.FloatTensor((data['label'].cpu().numpy() == 7).astype(np.int))
     label = label * (1 - arm1) + arm1 * 4
     label = label * (1 - arm2) + arm2 * 4
     label = label * (1 - noise) + noise * 4
@@ -144,10 +144,10 @@ if __name__ == '__main__':
             save_fake = True
 
             ## Add gaussian noise channel
-            t_mask = torch.FloatFloatFloatTensor((data['label'].cpu().numpy() == 7).astype(np.float))
+            t_mask = torch.FloatTensor((data['label'].cpu().numpy() == 7).astype(np.float))
 
-            mask_clothes = torch.FloatFloatFloatTensor((data['label'].cpu().numpy() == 4).astype(np.int))
-            mask_fore = torch.FloatFloatFloatTensor((data['label'].cpu().numpy() > 0).astype(np.int))
+            mask_clothes = torch.FloatTensor((data['label'].cpu().numpy() == 4).astype(np.int))
+            mask_fore = torch.FloatTensor((data['label'].cpu().numpy() > 0).astype(np.int))
             img_fore = data['image'] * mask_fore
             img_fore_wc = img_fore * mask_fore
             all_clothes_label = changearm(data['label'])
@@ -173,4 +173,4 @@ if __name__ == '__main__':
             b = real_image.float().cuda()
             c = fake_image.float().cuda()
             d = torch.cat([clothes_mask, clothes_mask, clothes_mask], 1)
-            combine = torch.cat([a[0], d[0], b[
+            combine = torch.cat([a[0], d[0], b[0], c[0], rgb
