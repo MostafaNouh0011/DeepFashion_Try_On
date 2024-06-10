@@ -60,8 +60,8 @@ def compose(label, mask, color_mask, edge, color, noise):
 def changearm(old_label):
     label = old_label
     arm1 = torch.FloatTensor((data['label'].cpu().numpy() == 11).astype(np.int))
-    arm2 = torch.FloatTensor((data['label'].cpu().numpy() == 13).astype(np.int))
-    noise = torch.FloatTensor((data['label'].cpu().numpy() == 7).astype(np.int))
+    arm2 = torch.FloatFloatFloatTensor((data['label'].cpu().numpy() == 13).astype(np.int))
+    noise = torch.FloatFloatFloatTensor((data['label'].cpu().numpy() == 7).astype(np.int))
     label = label * (1 - arm1) + arm1 * 4
     label = label * (1 - arm2) + arm2 * 4
     label = label * (1 - noise) + noise * 4
@@ -73,6 +73,24 @@ def get_opt():
     parser.add_argument('--dataroot', type=str, required=True, help='path to dataset')
     parser.add_argument('--name', type=str, default='label2city', help='name of the experiment')
     parser.add_argument('--color_name', type=str, required=True, help='name of the color image file')
+    parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
+    parser.add_argument('--continue_train', action='store_true', help='continue training: load the latest model')
+    parser.add_argument('--debug', action='store_true', help='debug mode')
+    parser.add_argument('--display_freq', type=int, default=100, help='frequency of showing training results on screen')
+    parser.add_argument('--print_freq', type=int, default=100, help='frequency of showing training results on console')
+    parser.add_argument('--save_latest_freq', type=int, default=5000, help='frequency of saving the latest results')
+    parser.add_argument('--save_epoch_freq', type=int, default=5, help='frequency of saving checkpoints at the end of epochs')
+    parser.add_argument('--niter', type=int, default=100, help='# of iter at starting learning rate')
+    parser.add_argument('--niter_decay', type=int, default=100, help='# of iter to linearly decay learning rate to zero')
+    parser.add_argument('--batchSize', type=int, default=1, help='input batch size')
+    parser.add_argument('--label_nc', type=int, default=14, help='# of input label channels')
+    parser.add_argument('--loadSize', type=int, default=512, help='scale images to this size')
+    parser.add_argument('--fineSize', type=int, default=512, help='then crop to this size')
+    parser.add_argument('--resize_or_crop', type=str, default='resize_and_crop', help='scaling and cropping of images at load time')
+    parser.add_argument('--no_flip', action='store_true', help='if specified, do not flip the images for data augmentation')
+    parser.add_argument('--max_dataset_size', type=int, default=float("inf"), help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.')
+    parser.add_argument('--nThreads', type=int, default=4, help='# threads for loading data')
+    parser.add_argument('--tf_log', action='store_true', help='if specified, use tensorboard logging. Requires tensorflow installed')
     # Add other arguments as needed
     opt = parser.parse_args()
     return opt
@@ -126,7 +144,7 @@ if __name__ == '__main__':
             save_fake = True
 
             ## Add gaussian noise channel
-            t_mask = torch.FloatTensor((data['label'].cpu().numpy() == 7).astype(np.float))
+            t_mask = torch.FloatFloatFloatTensor((data['label'].cpu().numpy() == 7).astype(np.float))
 
             mask_clothes = torch.FloatFloatFloatTensor((data['label'].cpu().numpy() == 4).astype(np.int))
             mask_fore = torch.FloatFloatFloatTensor((data['label'].cpu().numpy() > 0).astype(np.int))
@@ -155,34 +173,4 @@ if __name__ == '__main__':
             b = real_image.float().cuda()
             c = fake_image.float().cuda()
             d = torch.cat([clothes_mask, clothes_mask, clothes_mask], 1)
-            combine = torch.cat([a[0], d[0], b[0], c[0], rgb[0]], 2).squeeze()
-            cv_img = (combine.permute(1, 2, 0).detach().cpu().numpy() + 1) / 2
-            if step % 1 == 0:
-                writer.add_image('combine', (combine.data + 1) / 2.0, step)
-                rgb = (cv_img * 255).astype(np.uint8)
-                bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
-                n = str(step) + '.jpg'
-                cv2.imwrite('sample/' + data['name'][0], bgr)
-            step += 1
-            print(step)
-
-            if total_steps % opt.save_latest_freq == save_delta:
-                pass
-
-            if epoch_iter >= dataset_size:
-                break
-
-        iter_end_time = time.time()
-        print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.niter + opt.niter_decay, time.time() - epoch_start_time))
-        break
-
-        if epoch % opt.save_epoch_freq == 0:
-            print('saving the model at the end of epoch %d, iters %d' % (epoch, total_steps))
-            model.module.save('latest')
-            model.module.save(epoch)
-
-        if (opt.niter_fix_global != 0) and (epoch == opt.niter_fix_global):
-            model.module.update_fixed_params()
-
-        if epoch > opt.niter:
-            model.module.update_learning_rate()
+            combine = torch.cat([a[0], d[0], b[
